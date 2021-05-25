@@ -1,0 +1,5 @@
+Jinja2==3.0.1
+aiohttp_jinja2==1.4.2
+aiohttp==3.7.4.post0
+requests==2.25.1
+aiohttp_cors==0.7.0
