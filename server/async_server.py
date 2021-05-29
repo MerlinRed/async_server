@@ -7,8 +7,10 @@ import aiohttp_cors
 import aiohttp_jinja2
 import jinja2
 from aiohttp import web
+from sqlalchemy import select
 
-from .config.config import config, routes
+from .config.config import routes
+from .database.db import NumericTable, NamePhone, session
 
 
 def log(func: Callable) -> Callable:
@@ -23,8 +25,8 @@ def log(func: Callable) -> Callable:
     return decorator
 
 
-@aiohttp_jinja2.template('templates/tables.html')
 @log
+@aiohttp_jinja2.template('templates/tables.html')
 async def index(request: web.Request) -> Dict[str, Any]:
     """Показывает шаблон при открытии сайта"""
     data = {
@@ -33,43 +35,50 @@ async def index(request: web.Request) -> Dict[str, Any]:
     return data
 
 
-@routes.get('/data')
 @log
+@routes.get('/data')
 async def data_get(request: web.Request) -> web.json_response:
     """Отдает данные с сайта по запросу"""
+    select_number = select([NumericTable.c.number])
+    sort_number_by_id = select_number.order_by(NumericTable.c.id.asc())
+    object_data_numbers = session.execute(sort_number_by_id)
+
+    select_name = select([NamePhone.c.name])
+    select_phone = select([NamePhone.c.phone])
     data = {
-        'numbers': config['numbers'],
-        'name': config['name'],
-        'phone': config['phone'] if config.get('phone') else 'Номера нет'
+        'numbers': [int(*x) for x in object_data_numbers],
+        'name': [str(*x) for x in session.execute(select_name)],
+        'phone': [str(*x) for x in session.execute(select_phone)],
     }
     return web.json_response(data={'GET': data})
 
 
-@routes.post('/data')
 @log
+@routes.post('/data')
 async def data_post(request: web.Request) -> web.json_response:
     """Добавляет данные в config при запросе"""
     list_number = await request.json()
-    config['numbers'].extend(list_number['list'])
+    for num in list_number['list']:
+        session.execute(NumericTable.insert().values(number=num))
     return web.json_response(data={'POST': True})
 
 
-@routes.put('/data')
 @log
+@routes.put('/data')
 async def data_put(request: web.Request) -> web.json_response:
     """Обновляет данные в config при запросе"""
     new_data = await request.json()
-    for key, value in new_data.items():
-        config[key] = value
+    session.execute(NamePhone.update().where(NamePhone.c.id == 1).values(name=new_data['name']))
+    session.execute(NamePhone.update().where(NamePhone.c.id == 1).values(phone=str(new_data['phone'])))
     return web.json_response(data={'PUT': True})
 
 
-@routes.delete('/data')
 @log
+@routes.delete('/data')
 async def data_delete(request: web.Request) -> web.json_response:
     """Удаляет данные из config при запросе"""
     data_to_delete = await request.json()
-    config.pop(data_to_delete['data'])
+    session.execute(NamePhone.delete().where(NamePhone.c.phone == str(data_to_delete['data'])))
     return web.json_response(data={'DELETE': data_to_delete})
 
 
