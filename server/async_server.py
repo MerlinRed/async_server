@@ -10,7 +10,7 @@ from aiohttp import web
 from sqlalchemy import select
 
 from .config.config import routes
-from .database.db import NumericTable, session
+from .database.db import NumericTable, NamePhone, session
 
 
 def log(func: Callable) -> Callable:
@@ -42,10 +42,13 @@ async def data_get(request: web.Request) -> web.json_response:
     select_number = select([NumericTable.c.number])
     sort_number_by_id = select_number.order_by(NumericTable.c.id.asc())
     object_data_numbers = session.execute(sort_number_by_id)
+
+    select_name = select([NamePhone.c.name])
+    select_phone = select([NamePhone.c.phone])
     data = {
         'numbers': [int(*x) for x in object_data_numbers],
-        'name': 'Таблица 1',
-        'phone': 123456
+        'name': [str(*x) for x in session.execute(select_name)],
+        'phone': [str(*x) for x in session.execute(select_phone)],
     }
     return web.json_response(data={'GET': data})
 
@@ -65,7 +68,8 @@ async def data_post(request: web.Request) -> web.json_response:
 async def data_put(request: web.Request) -> web.json_response:
     """Обновляет данные в config при запросе"""
     new_data = await request.json()
-
+    session.execute(NamePhone.update().where(NamePhone.c.id == 1).values(name=new_data['name']))
+    session.execute(NamePhone.update().where(NamePhone.c.id == 1).values(phone=str(new_data['phone'])))
     return web.json_response(data={'PUT': True})
 
 
@@ -74,7 +78,7 @@ async def data_put(request: web.Request) -> web.json_response:
 async def data_delete(request: web.Request) -> web.json_response:
     """Удаляет данные из config при запросе"""
     data_to_delete = await request.json()
-
+    session.execute(NamePhone.delete().where(NamePhone.c.phone == str(data_to_delete['data'])))
     return web.json_response(data={'DELETE': data_to_delete})
 
 
