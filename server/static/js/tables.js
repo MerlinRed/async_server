@@ -19,7 +19,7 @@ async function createNewTagLi() {
     let numbers = data["numbers"]
     let name = data["name"]
     let phone = data["phone"]
-    label.textContent = `${name} -- ${phone}`
+    label.textContent = `${name} ${phone}`
     for (let num of numbers) {
         let new_child = document.createElement("li")
         new_child.textContent = num
@@ -28,3 +28,4 @@ async function createNewTagLi() {
 }
 
 createNewTagLi()
+setInterval(() => location.reload(), 5000)

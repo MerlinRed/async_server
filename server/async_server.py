@@ -25,8 +25,8 @@ def log(func: Callable) -> Callable:
     return decorator
 
 
-@aiohttp_jinja2.template('templates/tables.html')
 @log
+@aiohttp_jinja2.template('templates/tables.html')
 async def index(request: web.Request) -> Dict[str, Any]:
     """Показывает шаблон при открытии сайта"""
     data = {
@@ -35,8 +35,8 @@ async def index(request: web.Request) -> Dict[str, Any]:
     return data
 
 
-@routes.get('/data')
 @log
+@routes.get('/data')
 async def data_get(request: web.Request) -> web.json_response:
     """Отдает данные с сайта по запросу"""
     select_number = select([NumericTable.c.number])
@@ -53,8 +53,8 @@ async def data_get(request: web.Request) -> web.json_response:
     return web.json_response(data={'GET': data})
 
 
-@routes.post('/data')
 @log
+@routes.post('/data')
 async def data_post(request: web.Request) -> web.json_response:
     """Добавляет данные в config при запросе"""
     list_number = await request.json()
@@ -63,8 +63,8 @@ async def data_post(request: web.Request) -> web.json_response:
     return web.json_response(data={'POST': True})
 
 
-@routes.put('/data')
 @log
+@routes.put('/data')
 async def data_put(request: web.Request) -> web.json_response:
     """Обновляет данные в config при запросе"""
     new_data = await request.json()
@@ -73,8 +73,8 @@ async def data_put(request: web.Request) -> web.json_response:
     return web.json_response(data={'PUT': True})
 
 
-@routes.delete('/data')
 @log
+@routes.delete('/data')
 async def data_delete(request: web.Request) -> web.json_response:
     """Удаляет данные из config при запросе"""
     data_to_delete = await request.json()
