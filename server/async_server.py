@@ -47,16 +47,6 @@ class AsyncServer:
 
     @staticmethod
     @LogDecorator
-    @aiohttp_jinja2.template('templates/tables.html')
-    async def index(request: web.Request) -> Dict[str, Any]:
-        """Показывает шаблон при открытии сайта"""
-        data = {
-            'title': 'Вход на сайт',
-        }
-        return data
-
-    @staticmethod
-    @LogDecorator
     @routes.get('/data')
     async def data_get(request: web.Request) -> web.json_response:
         """Отдает данные с сайта по запросу"""
@@ -110,6 +100,19 @@ class AsyncServer:
         return web.json_response(data={'DELETE': data_to_delete})
 
 
+class ShowSitePage(AsyncServer):
+
+    @staticmethod
+    @LogDecorator
+    @aiohttp_jinja2.template('templates/tables.html')
+    async def index(request: web.Request) -> Dict[str, Any]:
+        """Показывает шаблон при открытии сайта"""
+        data = {
+            'title': 'Вход на сайт',
+        }
+        return data
+
+
 class RunServer:
     """Настройка и запуск сервера"""
 
@@ -152,4 +155,4 @@ class RunServer:
         web.run_app(app, host=self.host)
 
 
-main = RunServer(server=AsyncServer, host='127.0.0.1')
+main = RunServer(server=ShowSitePage, host='127.0.0.1')

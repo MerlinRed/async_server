@@ -4,8 +4,13 @@ from sqlalchemy.orm import sessionmaker
 from ..config.config import Base, engine
 
 
-# Создание таблицы NumericTable
 class NumericTable(Base):
+    """Создание таблицы NumericTable
+    tablename = numeric-data
+    2 столбца:
+        numeric_data_id - Integer
+        number - Integer
+    """
     __tablename__ = 'numeric-data'
 
     numeric_data_id = Column(Integer, primary_key=True)
@@ -15,9 +20,14 @@ class NumericTable(Base):
         return f'{self.numeric_data_id}  {self.number}'
 
 
-# Создание таблицы NamePhone
-
 class NamePhone(Base):
+    """Создание таблицы NumericTable
+    tablename = name-phone-data
+    3 столбца:
+        name_phone_id - Integer
+        name - VARCHAR(50)
+        phone - VARCHAR(16)
+    """
     __tablename__ = 'name-phone-data'
 
     name_phone_id = Column(Integer, primary_key=True)
