@@ -1,7 +1,7 @@
 from server.database.db import session, NumericTable, NamePhone
 
-for i in range(10):
-    numeric_table = NumericTable(number=i)
+for num in range(10):
+    numeric_table = NumericTable(number=num)
     session.add(numeric_table)
     session.commit()
 
