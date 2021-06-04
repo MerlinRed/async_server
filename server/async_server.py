@@ -148,7 +148,7 @@ class ShowSitePage:
 
     @staticmethod
     @LogDecorator
-    @aiohttp_jinja2.template('templates/tables.html')
+    @aiohttp_jinja2.template('templates/index.html')
     async def index(request: web.Request) -> Dict[str, Any]:
         """Генерирует шаблон при открытии страницы tables.html
         :param request: Данные приходящие со стороны клиента
