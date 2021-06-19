@@ -1,3 +1,5 @@
 venv
 __pycache__
 server_database.db
+log_error
+log_info

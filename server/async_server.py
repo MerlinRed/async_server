@@ -1,7 +1,7 @@
 import logging
 from abc import ABCMeta
 from pathlib import Path
-from typing import Dict, Any, Callable
+from typing import Dict, Any
 
 import aiohttp_cors
 import aiohttp_jinja2
@@ -9,7 +9,11 @@ import jinja2
 from aiohttp import web
 
 from .config.config import routes
+from .config.log_decorator import log_decorator
 from .database.db import NumericTable, NamePhone, session
+
+logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
+                    level=logging.INFO)
 
 
 class ServerInterface(metaclass=ABCMeta):
@@ -54,31 +58,11 @@ class ViewInterface(metaclass=ABCMeta):
         )
 
 
-class LogDecorator:
-    """Декортаор для логирования функций"""
-
-    def __init__(self, function: Callable):
-        """
-        :param function: Функция для декорирования
-        """
-        self.function = function
-
-    async def __call__(self, *args, **kwargs) -> Callable:
-        """
-        :param args: все позиционные аргументы
-        :param kwargs: все ключевые аргументы
-        :return: выполнение декорируемой функции
-        """
-        logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
-                            level=logging.INFO)
-        return await self.function(*args, **kwargs)
-
-
 class AsyncServer:
     """Реализация основных методов для работы с сервером"""
 
     @staticmethod
-    @LogDecorator
+    @log_decorator(row=66, module='async_server.py', arguments=('request: web.Request',))
     @routes.get('/data')
     async def data_get(request: web.Request) -> web.json_response:
         """Отдает данные из БД по GET запросу
@@ -96,7 +80,7 @@ class AsyncServer:
         return web.json_response(data={'GET': data})
 
     @staticmethod
-    @LogDecorator
+    @log_decorator(row=83, module='async_server.py', arguments=('request: web.Request',))
     @routes.post('/data')
     async def data_post(request: web.Request) -> web.json_response:
         """Добавляет данные в БД при POST запросе
@@ -111,7 +95,7 @@ class AsyncServer:
         return web.json_response(data={'POST': True})
 
     @staticmethod
-    @LogDecorator
+    @log_decorator(row=98, module='async_server.py', arguments=('request: web.Request',))
     @routes.put('/data')
     async def data_put(request: web.Request) -> web.json_response:
         """Обновляет данные в БД при PUT запросе
@@ -131,7 +115,7 @@ class AsyncServer:
         return web.json_response(data={'PUT': True})
 
     @staticmethod
-    @LogDecorator
+    @log_decorator(row=118, module='async_server.py', arguments=('request: web.Request',))
     @routes.delete('/data')
     async def data_delete(request: web.Request) -> web.json_response:
         """Удаляет данные из БД при DELETE запросе
@@ -147,7 +131,7 @@ class AsyncServer:
 class ShowSitePage:
 
     @staticmethod
-    @LogDecorator
+    @log_decorator(row=134, module='async_server.py', arguments=('request: web.Request',))
     @aiohttp_jinja2.template('templates/index.html')
     async def index(request: web.Request) -> Dict[str, Any]:
         """Генерирует шаблон при открытии страницы tables.html
@@ -160,7 +144,7 @@ class ShowSitePage:
         return data
 
     @staticmethod
-    @LogDecorator
+    @log_decorator(row=147, module='async_server.py', arguments=('request: web.Request',))
     @aiohttp_jinja2.template('templates/second_page.html')
     async def second_page(request: web.Request) -> Dict[str, Any]:
         """Генерирует шаблон при открытии страницы second_page.html

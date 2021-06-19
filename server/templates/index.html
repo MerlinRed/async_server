@@ -1,15 +1,27 @@
-{% extends 'templates/template.html' %}
+{% extends 'templates/template.html' %} 
 
-
-{% block title %}{{ title }}{% endblock %}
+{% block title %}{{ title }}{% endblock%} 
 
 {% block main %}
-    <div class="card">
-        <label class="table-name"></label>
-        <ol class="table-data"></ol>
-    </div>
 
-    <button>Переход на другой сайт</button>
+{% raw %}
 
-    <script src="static/js/index.js"></script>
+<div class="card" id="table-data">
+    <label class="table-name">
+        <div v-for="name in table_data">
+            {{ name[0], name[1] }}
+        </div>
+    </label>
+    <ol class="table-data">
+        <div v-for="num in arrayNumbers">
+            <li>{{ num }}</li>
+        </div>
+    </ol>
+</div>
+
+<button>Переход на другой сайт</button>
+
+{% endraw %}
+
+<script src="static/js/vue__.js"></script>
 {% endblock %}
