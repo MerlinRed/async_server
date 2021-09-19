@@ -1,7 +1,7 @@
 import logging
 from abc import ABCMeta
 from pathlib import Path
-from typing import Dict, Any
+from typing import Dict, Any, NoReturn
 
 import aiohttp_cors
 import aiohttp_jinja2
@@ -9,8 +9,7 @@ import jinja2
 from aiohttp import web
 
 from .config.config import routes
-from .config.log_decorator import log_decorator
-from .database.db import NumericTable, NamePhone, session
+from .database import NumericTable, NamePhone, session
 
 logging.basicConfig(format=u'%(filename)s [LINE:%(lineno)d] #%(levelname)-8s [%(asctime)s]  %(message)s',
                     level=logging.INFO)
@@ -26,11 +25,6 @@ class ServerInterface(metaclass=ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, subclass) -> hasattr and callable:
-        """Создание виртуального класса, который становится неявно суперклассом
-        классов, которые реализует нужные методы
-        :param subclass: Подкласс
-        :return: Нужные методы для реализации интерфейса
-        """
         return (
                 hasattr(subclass, 'data_get') and callable(subclass.data_get) and
                 hasattr(subclass, 'data_post') and callable(subclass.data_post) and
@@ -47,11 +41,6 @@ class ViewInterface(metaclass=ABCMeta):
 
     @classmethod
     def __subclasshook__(cls, subclass) -> hasattr and callable:
-        """Создание виртуального класса, который становится неявно суперклассом
-        классов, которые реализует нужные методы
-        :param subclass: Подкласс
-        :return: Нужные методы для реализации интерфейса
-        """
         return (
                 hasattr(subclass, 'index') and callable(subclass.index) and
                 hasattr(subclass, 'second_page') and callable(subclass.second_page)
@@ -62,13 +51,8 @@ class AsyncServer:
     """Реализация основных методов для работы с сервером"""
 
     @staticmethod
-    @log_decorator(row=66, module='async_server.py', arguments=('request: web.Request',))
     @routes.get('/data')
     async def data_get(request: web.Request) -> web.json_response:
-        """Отдает данные из БД по GET запросу
-        :param request: Данные приходящие со стороны клиента
-        :return: Ответ с сервера к клиенту в формате json
-        """
         select_number = session.query(NumericTable).order_by(NumericTable.numeric_data_id.asc())
         select_name_phone = session.query(NamePhone)
 
@@ -80,13 +64,8 @@ class AsyncServer:
         return web.json_response(data={'GET': data})
 
     @staticmethod
-    @log_decorator(row=83, module='async_server.py', arguments=('request: web.Request',))
     @routes.post('/data')
     async def data_post(request: web.Request) -> web.json_response:
-        """Добавляет данные в БД при POST запросе
-        :param request: Данные приходящие со стороны клиента
-        :return: Ответ с сервера к клиенту в формате json
-        """
         list_number = await request.json()
         for num in list_number['list']:
             numeric_table = NumericTable(number=num)
@@ -95,13 +74,8 @@ class AsyncServer:
         return web.json_response(data={'POST': True})
 
     @staticmethod
-    @log_decorator(row=98, module='async_server.py', arguments=('request: web.Request',))
     @routes.put('/data')
     async def data_put(request: web.Request) -> web.json_response:
-        """Обновляет данные в БД при PUT запросе
-        :param request: Данные приходящие со стороны клиента
-        :return: Ответ с сервера к клиенту в формате json
-        """
         new_data = await request.json()
 
         session.query(NamePhone).filter_by(name_phone_id=1).update(
@@ -115,13 +89,8 @@ class AsyncServer:
         return web.json_response(data={'PUT': True})
 
     @staticmethod
-    @log_decorator(row=118, module='async_server.py', arguments=('request: web.Request',))
     @routes.delete('/data')
     async def data_delete(request: web.Request) -> web.json_response:
-        """Удаляет данные из БД при DELETE запросе
-        :param request: Данные приходящие со стороны клиента
-        :return: Ответ с сервера к клиенту в формате json
-        """
         data_to_delete = await request.json()
         session.query(NamePhone).filter_by(phone=str(data_to_delete['data'])).delete()
         session.commit()
@@ -131,26 +100,16 @@ class AsyncServer:
 class ShowSitePage:
 
     @staticmethod
-    @log_decorator(row=134, module='async_server.py', arguments=('request: web.Request',))
     @aiohttp_jinja2.template('templates/index.html')
     async def index(request: web.Request) -> Dict[str, Any]:
-        """Генерирует шаблон при открытии страницы tables.html
-        :param request: Данные приходящие со стороны клиента
-        :return: Словарь с данными для работы с шаблонизатором на странице
-        """
         data = {
             'title': 'Вход на сайт',
         }
         return data
 
     @staticmethod
-    @log_decorator(row=147, module='async_server.py', arguments=('request: web.Request',))
     @aiohttp_jinja2.template('templates/second_page.html')
     async def second_page(request: web.Request) -> Dict[str, Any]:
-        """Генерирует шаблон при открытии страницы second_page.html
-        :param request: Данные приходящие со стороны клиента
-        :return: Словарь с данными для работы с шаблонизатором на странице
-        """
         data = {
             'title': 'Что-то',
             'data': [x for x in range(10, 100)]
@@ -161,22 +120,25 @@ class ShowSitePage:
 class RunServer:
     """Настройка и запуск сервера"""
 
-    def __init__(self, server, view, host: str):
+    def __new__(cls, *args, **kwargs):
+        server, view = kwargs.get('server'), kwargs.get('view')
+        assert issubclass(server, ServerInterface), f'Интерфейс [class {server.__name__}] не реализует нужные методы'
+        assert issubclass(view, ViewInterface), f'Интерфейс [class {server.__name__}] не реализует нужные методы'
+        return super().__new__(cls)
+
+    def __init__(self, *, server, view, host: str) -> NoReturn:
         """
         :param server: Класс реализуюший интерфейс ServerInterface
         :param view: Класс реализуюший интерфейс ViewInterface
         :param host: Адрес сервера
         """
-        assert issubclass(server, ServerInterface), f'Интерфейс [class {server.__name__}] не реализует нужные методы'
-        assert issubclass(view, ViewInterface), f'Интерфейс [class {server.__name__}] не реализует нужные методы'
         self.server = server
         self.view = view
         self.host = host
 
-    def create_cors(self, app: web.Application):
+    def create_cors(self, app: web.Application) -> NoReturn:
         """Добавляет политику cors на функции,
         которые работают с внешними запросами.
-        :param app: Веб приложение
         """
         cors = aiohttp_cors.setup(app, defaults={
             "*": aiohttp_cors.ResourceOptions(
@@ -191,7 +153,7 @@ class RunServer:
         cors.add(resource.add_route("PUT", self.server.data_put))
         cors.add(resource.add_route("DELETE", self.server.data_delete))
 
-    def main(self):
+    def main(self) -> NoReturn:
         """Настройка сервера, для запуска
         создает сервер
         дает политику cors

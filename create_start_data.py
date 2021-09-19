@@ -1,4 +1,5 @@
-from server.database.db import session, NumericTable, NamePhone
+from server.database import NumericTable, NamePhone
+from server.database.db import session
 
 for num in range(10):
     numeric_table = NumericTable(number=num)
